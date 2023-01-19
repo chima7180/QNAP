@@ -1,0 +1,75 @@
+/DECLARE/
+QUEUE SRC, R1, R2, D ;     & deux files : source et routeur
+REAL TAILLE, DEBIT01, DEBIT12, DEBIT23;
+FILE Courbe0, Courbe1, Courbe2, Courbe3;
+
+
+/STATION/
+NAME = SRC;
+TYPE = SINGLE;
+INIT = 4000000/(424);
+SERVICE =  BEGIN
+    CST(TAILLE/DEBIT01);
+    WRITELN(Courbe0, TIME, " ", CUSTNB(SRC));
+    WRITELN(Courbe0, TIME, " ", CUSTNB(SRC)-1);
+    WRITELN(Courbe1, TIME, " ", CUSTNB(R1));
+    WRITELN(Courbe1, TIME, " ", CUSTNB(R1)+1);
+    END;
+TRANSIT = R1;
+
+
+/STATION/
+NAME = R1;
+TYPE = SINGLE;
+SERVICE = BEGIN
+    CST(TAILLE/DEBIT12);
+    WRITELN(Courbe1, TIME, " ", CUSTNB(R1));
+    WRITELN(Courbe1, TIME, " ", CUSTNB(R1)-1);
+    WRITELN(Courbe2, TIME, " ", CUSTNB(R2));
+    WRITELN(Courbe2, TIME, " ", CUSTNB(R2)+1);
+    END;
+TRANSIT = R2;
+
+/STATION/
+NAME = R2;
+TYPE = SINGLE;
+SERVICE = BEGIN
+    CST(TAILLE/DEBIT23);
+    WRITELN(Courbe2, TIME, " ", CUSTNB(R2));
+    WRITELN(Courbe2, TIME, " ", CUSTNB(R2)-1);
+    WRITELN(Courbe3, TIME, " ", CUSTNB(D));
+    WRITELN(Courbe3, TIME, " ", CUSTNB(D)+1);
+    END;
+TRANSIT = D;
+
+/STATION/
+NAME = D;
+TYPE = SINGLE;
+SERVICE = CST(100000);
+TRANSIT = OUT;
+
+/CONTROL/
+TMAX = 1000 ;
+
+
+/EXEC/
+    BEGIN
+            DEBIT01 := 2000000;
+            DEBIT12 := 1000000;
+            DEBIT23 := 2000000;
+            TAILLE  := 424;
+            FILASSIGN(Courbe0, "Courbe0result.txt");
+            OPEN(Courbe0);
+            FILASSIGN(Courbe1, "Courbe1result.txt");
+            OPEN(Courbe1);
+            FILASSIGN(Courbe2, "Courbe2result.txt");
+            OPEN(Courbe2);
+            FILASSIGN(Courbe3, "Courbe3result.txt");
+            OPEN(Courbe3);
+            SIMUL;
+            CLOSE(Courbe0);
+            CLOSE(Courbe1);
+            CLOSE(Courbe2);
+            CLOSE(Courbe3);
+    END;
+/END/
