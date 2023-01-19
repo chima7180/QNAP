@@ -1,0 +1,35 @@
+/DECLARE/
+QUEUE SRC, R;
+FILE Courbe;
+
+
+/STATION/
+NAME = SRC;
+TYPE = SOURCE;
+SERVICE = BEGIN
+    EXP(1.5);
+    WRITELN(Courbe, TIME, " ", CUSTNB(R));
+    WRITELN(Courbe, TIME, " ", CUSTNB(R)+1);
+    END;
+TRANSIT=R;
+
+/STATION/
+NAME=R;
+SERVICE=BEGIN
+    EXP(2.0);
+    WRITELN(Courbe, TIME, " ", CUSTNB(R));
+    WRITELN(Courbe, TIME, " ", CUSTNB(R)-1);
+    END;
+TRANSIT=OUT;
+
+/CONTROL/
+TMAX = 1000;
+
+/EXEC/
+    BEGIN
+        FILASSIGN(Courbe, "EXO2result.txt");
+        OPEN(Courbe);
+        SIMUL;
+        CLOSE(Courbe);
+    END;
+/END/

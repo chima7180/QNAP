@@ -1,0 +1,25 @@
+/DECLARE/
+QUEUE SRC, R;     & deux files : source et routeur
+
+/STATION/
+NAME = SRC;
+TYPE = SOURCE;
+SERVICE = EXP(1.5);
+TRANSIT = R;
+
+
+/STATION/
+NAME = R;
+TYPE = SINGLE;
+SERVICE = EXP(2.0);
+TRANSIT = OUT;
+
+/CONTROL/
+TMAX = 1000
+
+
+/EXEC/
+    BEGIN
+            SIMUL;
+    END;
+/END/
