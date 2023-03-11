@@ -1,0 +1,122 @@
+&Made by Carl Eid , Gressette théo
+
+& Déclarations de variables
+/DECLARE/
+QUEUE SRC,L1,L2,L3;
+REAL LAMBDA, MU, CHARGE;
+REAL nR1, nR2, nR3, nBP;
+INTEGER C, X, M;
+FILE COURBE(0:2);
+& Variables customers
+CUSTOMER REAL DUREE;
+REF CUSTOMER CUST;
+
+&notre source
+/STATION/
+NAME = SRC;
+TYPE = SOURCE;
+SERVICE = BEGIN
+    EXP((1./LAMBDA) / 3.);
+    DUREE := EXP(1./MU);
+    END;
+TRANSIT = L1,1./3.,L2,1./3.,L3;
+
+&lien 1
+/STATION/
+NAME = L1;
+TYPE = MULTIPLE(C);
+CAPACITY = C;
+REJECT = BEGIN
+    IF (CUSTNB(L2) < C-M) AND (CUSTNB(L3) < C-M) THEN BEGIN
+        CUST := NEW(CUSTOMER); & On duplique l'appel
+        CUST.DUREE := CUSTOMER.DUREE; & il obtient la meme durée d'appel
+        TRANSIT(CUST, L2); & on le fait transiter sur le lien2
+        TRANSIT(L3);
+    END ELSE BEGIN
+        nR1 := nR1+1;
+        nBP := nBP + 1.;
+        TRANSIT(OUT);
+    END;
+    END;
+SERVICE = CST(DUREE);
+TRANSIT = OUT;
+
+&lien 2
+/STATION/
+NAME = L2;
+TYPE = MULTIPLE(C);
+CAPACITY = C;
+REJECT = BEGIN
+    IF (CUSTNB(L1) < C-M) AND (CUSTNB(L3) < C-M) THEN BEGIN
+        CUST := NEW(CUSTOMER);
+        CUST.DUREE := CUSTOMER.DUREE;
+        TRANSIT(CUST, L3);
+        TRANSIT(L1);
+    END ELSE BEGIN
+        nR2 := nR2+1;
+        nBP := nBP + 1.;
+        TRANSIT(OUT);
+    END;
+    END;
+SERVICE = CST(DUREE);
+TRANSIT = OUT;
+
+&lien 3
+/STATION/
+NAME = L3;
+TYPE = MULTIPLE(C);
+CAPACITY = C;
+REJECT = BEGIN
+    IF (CUSTNB(L1) < C-M) AND (CUSTNB(L2) < C-M) THEN BEGIN
+        CUST := NEW(CUSTOMER);
+        CUST.DUREE := CUSTOMER.DUREE;
+        durée que l'appel actuel
+        TRANSIT(CUST, L1);
+        TRANSIT(L2);
+    END ELSE BEGIN
+        nR3 := nR3+1;
+        nBP := nBP + 1.;
+        TRANSIT(OUT);
+    END;
+    END;
+SERVICE = CST(DUREE);
+TRANSIT = OUT;
+
+/CONTROL/
+TMAX = 200000;
+
+/EXEC/
+BEGIN
+    FILASSIGN( COURBE(0), "ex2q3_lein1.txt" );
+    FILASSIGN( COURBE(1), "ex2q3_lien2.txt" );
+    FILASSIGN( COURBE(2), "ex2q3_lien2.txt" );
+    OPEN(COURBE(0));
+    OPEN(COURBE(1));
+    OPEN(COURBE(2));
+    MU := 1./300;
+    FOR X := 10 STEP 5 UNTIL 50 DO
+    BEGIN
+        CHARGE := X;
+        LAMBDA := CHARGE * MU;
+        C := CHARGE;
+        FOR M := 1 STEP 1 UNTIL 3 DO
+        BEGIN
+            nR1 := 0;
+            nR2 := 0;
+            nR3 := 0;
+            nBP := 0;
+            SIMUL;
+            WRITELN("CHARGE : ", CHARGE, " CAPACITE : ", C, "Nombre total de rejets : ", nBP);
+            WRITELN("Taux de service L1: " , SERVNB(L1), " Nombre de rejets L1: ", nR1);
+            WRITELN("Taux de service L2: " , SERVNB(L2), " Nombre de rejets L2: ", nR2);
+            WRITELN("Taux de service L3: " , SERVNB(L3), " Nombre de rejets L3: ", nR3);
+            WRITELN(COURBE(0) , M, " ", CHARGE , " ",nR1/SERVNB(L1));
+            WRITELN(COURBE(1) , M, " ", CHARGE , " ",nR2/SERVNB(L2));
+            WRITELN(COURBE(2) , M, " ", CHARGE , " ",nR3/SERVNB(L3));
+        END;
+    END;
+    CLOSE(COURBE(0));
+    CLOSE(COURBE(1));
+    CLOSE(COURBE(2));
+END;
+/END/

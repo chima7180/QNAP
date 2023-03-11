@@ -1,0 +1,76 @@
+&Made by Carl Eid , Gressette théo
+
+& Déclarations de variables
+/DECLARE/
+QUEUE SRC1,SRC2,SW1,SW2,OUT1,OUT2;
+REAL l,charge,mu, debit, taille;
+INTEGER X;
+FILE Courbe;
+
+
+&Les deux sources 1 et 2 avec constant
+/STATION/
+NAME=SRC1;  &la première source
+TYPE=SOURCE;
+SERVICE=CST(1./l); &on rajoute un . apres le 1 pour 1.0000
+TRANSIT=SWITCH1;
+
+
+/STATION/
+NAME=SRC2; & seconde source
+TYPE=SOURCE;
+SERVICE=CST(1./l);
+TRANSIT=SWITCH2;
+
+&ici les deux switchs qui suivent une loi expo
+/STATION/
+NAME=SW1; &switch 1
+TYPE=SINGLE;
+SERVICE=EXP(1./mu);
+TRANSIT=OUT1,0.5,OUT2,0.5;
+
+/STATION/
+NAME=SW2; &switch 2
+TYPE=SINGLE;
+SERVICE=EXP(1./mu);
+TRANSIT=OUT1,0.5,OUT2,0.5;
+
+& première entrée  du switch3
+/STATION/
+NAME=OUT1;
+TYPE=SINGLE;
+SERVICE=EXP(1./mu);
+TRANSIT=OUT;
+
+& second entrée du switch3
+/STATION/
+NAME=OUT2;
+TYPE=SINGLE;
+SERVICE=EXP(1./mu);
+TRANSIT=OUT;
+
+/CONTROL/
+TMAX=10000;
+OPTION=NRESULT;
+
+/EXEC/
+BEGIN
+    FILASSIGN(Courbe,"ex1q1.txt");
+    OPEN(Courbe);
+    debit := 10000000; & débit de 10 mbps
+    taille := 10*1000; & taille de paquet de 10k
+    mu := 1000; & debit/taille
+    FOR X := 1 STEP 4 UNTIL 9 DO
+    BEGIN
+        charge := X * 0.1;
+        l := charge*mu;
+        SIMUL;  & trace les courbes
+        WRITELN("Charge : ", charge);
+        WRITELN(Courbe, charge, " ", MRESPONSE(SW1));
+        WRITELN(Courbe, charge, " ", MRESPONSE(SW2));
+        WRITELN(Courbe, charge, " ", MRESPONSE(OUT1));
+        WRITELN(Courbe, charge, " ", MRESPONSE(OUT2));
+    END;
+    CLOSE(Courbe);
+END;
+/END/

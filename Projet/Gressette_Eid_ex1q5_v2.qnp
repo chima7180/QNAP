@@ -1,0 +1,98 @@
+&Made by Carl Eid , Gressette théo
+
+
+/DECLARE/
+QUEUE SRC1,SRC2,SW1,SW2,LINK1,LINK2,OUT1,OUT2;
+REAL l, mu, charge, debit, taille, N, nBP;
+INTEGER X;
+FILE Courbe;
+
+
+& Les deux sources 1 et 2
+/STATION/
+NAME=SRC1;
+TYPE=SOURCE;
+SERVICE=EXP(1./l); & nous sommes maintenant en exp
+TRANSIT=SW1;
+
+/STATION/
+NAME=SRC2;
+TYPE=SOURCE;
+SERVICE=EXP(1./l);
+TRANSIT=SW2;
+
+&ici les deux switchs
+/STATION/
+NAME=SW1;
+TYPE=SINGLE;
+SERVICE=EXP(1./mu);
+TRANSIT=LINK1;
+
+
+/STATION/
+NAME=SW2;
+TYPE=SINGLE;
+SERVICE=EXP(1./mu);
+TRANSIT=LINK2;
+
+& création des deux cables
+/STATION/
+NAME=LINK1;
+TYPE=SINGLE;
+SERVICE=CST(1./4000.); & 4000 = temps paquet sur 50km
+50km;
+TRANSIT=OUT1,0.5,OUT2,0.5;
+
+/STATION/
+NAME=LINK2;
+TYPE=SINGLE;
+SERVICE=CST(1./4000.);
+50km;
+TRANSIT=OUT1,0.5,OUT2,0.5;
+
+& Sortie 1 et 2
+/STATION/
+NAME=OUT1;
+TYPE=SINGLE;
+CAPACITY=N;
+REJECT = BEGIN
+    nBP := nBP+1;
+    TRANSIT (OUT);
+    END;
+SERVICE=EXP(1./mu);
+TRANSIT=OUT;
+
+
+/STATION/
+NAME=OUT2;
+TYPE=SINGLE;
+CAPACITY=N;
+REJECT = BEGIN
+    nBP := nBP+1;
+    TRANSIT (OUT);
+    END;
+SERVICE=EXP(1./mu);
+TRANSIT=OUT;
+
+/CONTROL/
+TMAX=20000;
+
+
+/EXEC/
+BEGIN
+    FILASSIGN(Courbe,"ex1q5.txt");
+    OPEN(Courbe);
+    debit := 10000000; & débit de 10 mbps
+    taille := 10000; & taille de paquet de 10kb
+    mu := 1000; & debit/taille
+    charge := 0.9;
+    l := charge*mu;
+    FOR N := 5 STEP 5 UNTIL 30 DO
+    BEGIN
+        nBP := 0;
+        SIMUL;
+        WRITELN(Courbe, N, " ", nBP / (SERVNB(SRC1) +SERVNB(SRC2)));
+    END;
+    CLOSE(Courbe);
+END;
+/END/
